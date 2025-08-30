@@ -249,7 +249,7 @@ initial_activities = {
             "end_time": "08:30"
         },
         "max_participants": 25,
-        "participants": ["barki@mergington.edu"]
+        "participants": ["barki@umn.edu"]
     }
 }
 
