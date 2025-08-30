@@ -1,15 +1,91 @@
 """
-MongoDB database configuration and setup for Mergington High School API
+In-memory database configuration and setup for Mergington High School API
 """
 
-from pymongo import MongoClient
 from argon2 import PasswordHasher
 
-# Connect to MongoDB
-client = MongoClient('mongodb://localhost:27017/')
-db = client['mergington_high']
-activities_collection = db['activities']
-teachers_collection = db['teachers']
+# In-memory storage for development
+activities_data = {}
+teachers_data = {}
+
+# Simple in-memory collection class to mimic MongoDB API
+class InMemoryCollection:
+    def __init__(self, data_store):
+        self.data = data_store
+    
+    def find(self, query=None):
+        if query is None:
+            return [{"_id": k, **v} for k, v in self.data.items()]
+        # Simplified query support for basic operations
+        result = []
+        for key, value in self.data.items():
+            match = True
+            for q_key, q_value in query.items():
+                if q_key == "_id":
+                    if key != q_value:
+                        match = False
+                        break
+                elif "." in q_key:  # Handle nested queries like "schedule_details.days"
+                    nested_keys = q_key.split(".")
+                    nested_value = value
+                    for nkey in nested_keys:
+                        if isinstance(nested_value, dict) and nkey in nested_value:
+                            nested_value = nested_value[nkey]
+                        else:
+                            match = False
+                            break
+                    if match and isinstance(q_value, dict) and "$in" in q_value:
+                        if not any(item in nested_value for item in q_value["$in"]):
+                            match = False
+                elif q_key not in value or value[q_key] != q_value:
+                    match = False
+                    break
+            if match:
+                result.append({"_id": key, **value})
+        return result
+    
+    def find_one(self, query):
+        results = self.find(query)
+        return results[0] if results else None
+    
+    def insert_one(self, doc):
+        doc_id = doc.pop("_id")
+        self.data[doc_id] = doc
+        return type('Result', (), {'inserted_id': doc_id})()
+    
+    def update_one(self, query, update):
+        doc = self.find_one(query)
+        if doc:
+            doc_id = doc["_id"]
+            if "$push" in update:
+                for key, value in update["$push"].items():
+                    if key in self.data[doc_id]:
+                        self.data[doc_id][key].append(value)
+                    else:
+                        self.data[doc_id][key] = [value]
+            if "$pull" in update:
+                for key, value in update["$pull"].items():
+                    if key in self.data[doc_id] and value in self.data[doc_id][key]:
+                        self.data[doc_id][key].remove(value)
+            return type('Result', (), {'modified_count': 1})()
+        return type('Result', (), {'modified_count': 0})()
+    
+    def count_documents(self, query=None):
+        return len(self.find(query or {}))
+    
+    def aggregate(self, pipeline):
+        # Simplified aggregation for getting unique days
+        if len(pipeline) == 3 and "$unwind" in pipeline[0] and "$group" in pipeline[1]:
+            days = set()
+            for value in self.data.values():
+                if "schedule_details" in value and "days" in value["schedule_details"]:
+                    for day in value["schedule_details"]["days"]:
+                        days.add(day)
+            return [{"_id": day} for day in sorted(days)]
+        return []
+
+activities_collection = InMemoryCollection(activities_data)
+teachers_collection = InMemoryCollection(teachers_data)
 
 # Methods
 def hash_password(password):
