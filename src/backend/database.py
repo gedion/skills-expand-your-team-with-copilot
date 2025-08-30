@@ -239,6 +239,17 @@ initial_activities = {
         },
         "max_participants": 16,
         "participants": ["william@mergington.edu", "jacob@mergington.edu"]
+    },
+    "Study AI once a day": {
+        "description": "Daily AI learning sessions for aspiring AI-first entrepreneurs. Study machine learning, artificial intelligence concepts, and emerging technologies",
+        "schedule": "Monday to Friday, 8:00 AM - 8:30 AM",
+        "schedule_details": {
+            "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            "start_time": "08:00",
+            "end_time": "08:30"
+        },
+        "max_participants": 25,
+        "participants": ["barki@mergington.edu"]
     }
 }
 
