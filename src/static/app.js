@@ -351,10 +351,14 @@ document.addEventListener("DOMContentLoaded", () => {
       name.includes("coding") ||
       name.includes("tech") ||
       name.includes("robotics") ||
+      name.includes("ai") ||
       desc.includes("programming") ||
       desc.includes("technology") ||
       desc.includes("digital") ||
-      desc.includes("robot")
+      desc.includes("robot") ||
+      desc.includes("artificial intelligence") ||
+      desc.includes("machine learning") ||
+      desc.includes("ai")
     ) {
       return "technology";
     }
